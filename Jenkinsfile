@@ -27,12 +27,29 @@ pipeline {
             }
         }
 
+        // stage('Deploy to Kubernetes') {
+        //     steps {
+        //         script {
+        //             sh "kubectl apply -f k8s/deployment.yaml"
+        //             sh "kubectl apply -f k8s/service.yaml"
+        //             sh "kubectl apply -f k8s/ingress.yaml"
+        //             sh "kubectl set image deployment/nginx-deployment nginx-container=${APP_NAME}:${IMAGE_TAG}"
+        //         }
+        //     }
+        // }
         stage('Deploy to Kubernetes') {
             steps {
                 script {
+                    // 🚀 1. โยน Image ที่เพิ่ง Build เสร็จเข้าโกดังของ Kind ก่อน
+                    sh "kind load docker-image ${APP_NAME}:${IMAGE_TAG}"
+                    sh "kind load docker-image ${APP_NAME}:latest" // (แถมตัว latest เข้าไปด้วยเผื่อใช้)
+
+                    // ⚙️ 2. สั่ง Apply โครงสร้างต่างๆ
                     sh "kubectl apply -f k8s/deployment.yaml"
                     sh "kubectl apply -f k8s/service.yaml"
                     sh "kubectl apply -f k8s/ingress.yaml"
+
+                    // 🔄 3. สั่งอัปเดต Pod ให้ใช้ Image เวอร์ชันใหม่ล่าสุด
                     sh "kubectl set image deployment/nginx-deployment nginx-container=${APP_NAME}:${IMAGE_TAG}"
                 }
             }
